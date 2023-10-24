@@ -1,0 +1,542 @@
+---
+title: "AvanceSP_Equipo"
+author: "Equipo Mundo"
+date: "2023-06-08"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Sección 1: analisis de relaciones (variables)
+
+## Leyendo los datos
+
+Se genera la matriz SAC que contiene los datos a analizar.
+
+```{r}
+SAC = read.csv("Muestra_SAC2022.csv")
+```
+
+## Seleccionar variables
+
+Para facilitar el análisis se quitarán las columnas 1 a 3 que contienen datos categóricos, puesto que las matrices de correlación y gráficos de disperción sólo deben contener variables numéricas.
+
+```{r}
+M = SAC[,-1:-3] #Como es menos es quitar, "todas las filas, quitar col 1 a 3"
+```
+
+## Matriz de correlaciones y gráfico de dispersión
+
+```{r}
+C = round(cor(M),2)
+C
+```
+
+## Realizar la matriz de gráficos de dispersión de las variables contenidas en la base de datos.
+
+```{r}
+plot(M, col="blue")
+```
+
+Se observa que las relaciones que parecen significativas son:
+
+* Relación 1: NOX vs CO con una relación muy fuerte.
+* Relación 2: NOX vs N0 con una relación muy fuerte.
+* Relación 3: NO vs CO con una relación muy fuerte.
+* Relación 4: NO2 vs NOX con una relación fuerte.
+* Relación 5: NO2 vs CO con una relación fuerte.
+
+## Pruebas de hipótesis de correlación
+
+En todas las relaciones se utilizara un nivel de significancia de $\alpha=0.05$ y un tamaño de muestra $n=1000$.
+
+## 1. Hipótesis
+
+$H_0 = \rho =0$
+
+$H_1=\rho\neq0$
+
+$\alpha=0.05$
+
+El estadístico de prueba es:
+
+$t^*=\frac{r\sqrt{n-2}}{\sqrt{1-r^2}}$
+
+La distribución muestral es una $t$ de student con $n-2$ grados de libertad
+
+## 2. Regla de desición
+
+Se usará un nivel de significancia de 0.05, entonces:
+
+```{r}
+n=length(M$CO)
+alfa=0.05
+t0=qt(alfa/2,n-2)
+cat("El valor frontera del estadístico con", n-2, "grados de libertad es t0 =", t0)
+
+
+```
+
+\*\* Rechazo $H_0$ si\*\*
+
+-   $|1t^*|>|t_0|$ es decir si $|t^*|>|1.96|$
+-   valor p \< $\alpha$
+
+Tomando en cuenta lo anterior, se harán analisis orientados a las relación descritas como 'muy fuertes' es decir indice de correlación mayor o igual a 0.8. 
+
+## Relación 1:  NOX y CO
+
+```{r}
+R1 = cor.test(M$NOX,M$CO,alternative="two.sided",method="pearson",conf.level = 0.95)
+R1
+```
+
+### Análisis del resultado
+
+
+A partir de la salida se observa que:
+
+t*=`r round(R1$statistic,4)`
+valor p=`round(R1$p.value,5)`
+r=`r round(R1$estimate,4)`
+intervalo de confianza de r:[`r round(R1$conf.int,4)`]
+
+### Conclusión estadística
+
+Observamos que:
+
+* $t^*=$ `r round(R1$statistic,4)` es mayor a $t_0=`r round(t0,4)`$
+
+* valor p = `r round(R1$p.value,4)` es menor que $\alpha=0.05$
+
+Por tanto, se rechaza $H_0$ con un nivel de significancia de 0.05.
+
+## Relación 2: NOX y NO
+
+```{r}
+R2=cor.test(M$NOX, M$NO, alternative = "two.sided", method="pearson", conf.level = 0.95 )
+R2
+```
+
+### Análisis del resultado
+
+A partir de la salida se observa que:
+
+t* = `r round(R2$statistic,4)`  
+valor p =`r round(R2$p.value,5)`  
+r = `r round(R2$estimate,4)`  
+Intervalo de confianza de r: [`r round(R2$conf.int,4)`]
+
+### Conclusión estadística
+
+Observamos que:
+
+* $t^*=$ `r round(R2$statistic,4)` es mayor a $t_0=`r round(t0,4)`$
+
+* valor p = `r round(R2$p.value,4)` es menor que $\alpha=0.05$
+
+Por tanto, se rechaza $H_0$ con un nivel de significancia de 0.05.
+
+## Relación 3: NO y CO
+
+```{r}
+R3=cor.test(M$NO, M$CO,alternative = "two.sided", conf.level = 0.95, method = "pearson")
+R3
+```
+
+### Análisis del resultado
+
+A partir de la salida se observa que: 
+
+t* = `r round(R3$statistic,4)`  
+valor p =`r round(R3$p.value,5)`  
+r = `r round(R3$estimate,4)`  
+Intervalo de confianza de r: [`r round(R3$conf.int,4)`]
+
+### Conclusión estadística
+
+Observamos que:
+
+* $t^*=$ `r round(R3$statistic,4)` es mayor a $t_0=`r round(t0,4)`$
+
+* valor p = `r round(R3$p.value,4)` es menor que $\alpha=0.05$
+
+Por tanto, se rechaza $H_0$ con un nivel de significancia de 0.05.
+
+```{r}
+correlaciones=c(round(R1$estimate,3),round(R2$estimate,3),round(R3$estimate,3))
+test=c(round(R1$statistic,3),round(R2$statistic,3),round(R3$statistic,3))
+tfront=c(t0,t0,t0)
+valorp=c(round(R1$p.value,9),round(R2$p.value,9),round(R3$p.value,9))
+
+
+T=data.frame(correlaciones,test,tfront,valorp) # nombres columnas
+names(T)=c("r","t*","t_0","Valor p")
+row.names(T)=c("R1: NOX y CO","R2: NOX y NO","R3: NO y CO") # nombres filas
+T
+```
+
+De acuerdo a lo anterior, se puede mencionar a la relación de NOX y CO como la más fuerte mientras que la relación de NO y CO es la más debil de las tres. 
+
+El análisis nos muestra como las tres variables están relacionadas entre sí. Es decir, no hay independencia entre ellas, la alteración de los valores de una, significará que también cambiarán las de las otras dos.
+
+Para definir la variable independiente se deba hacer una revisión bibliográfica sobre las tres variables analizadas.
+
+# Sección 2: modelos analizados 
+
+A continuación se realizará una regresión lineal a cada una de las relación 'muy fuertes' anteriormente mencionadas. 
+
+## Modelo lineal de relación 1: NOX y CO
+
+Realizaremos el modelo de regresión lineal con las variables *CO* y *NOX*. 
+
+Se considerará como variable de respuesta a *CO*
+
+```{r}
+Y1 = M$CO
+X1 = M$NOX
+regresion1 = lm(Y1~X1) # notar primero la Y
+regresion1
+```
+
+La ecuación del modelo de regresión lineal es: $CO = 0.013\,NOX + 0.027$
+
+## Gráfica
+
+```{r}
+plot(X1,Y1,col="blue",main="Comparasión CO y NOX")
+abline(regresion1, col="green", lwd=2)
+text(200,0.2,"CO = 0.013*NOX + 0.027")
+```
+
+## Verificación del modelo
+
+### Beta1 significativo 
+
+Analizaremos la significancia del coeficiente $\beta_1$ en el modelo, si la hipótesis nula no es rechazada  es un indicador de que la variable regresora puede ser eliminada del modelo y por ende que no hay relación entre ambas variables. Si la hipótesis nula se rechaza, se conluye que $\beta_1$ es significativamente diferente de cero y por tanto la variable *NOX* contribuye significativamente al modelo.
+
+**Prueba de hipótesis**
+
+$H_0: \beta_1 = 0$ (no sirve el modelo porque pendiente = 0)
+
+$H_1: \beta_1 \neq 0$  (si hay dependencia entre NOX y CO)
+
+$\alpha = 0.05$
+
+```{r}
+summary(regresion1)
+```
+
+1. Como el valor p = 0 < 0.05 rechazamos la hipótesis nula con un nivel de significancia de 0.05, y se justifica el uso de la *NOX* como variable regresora o independiente en el modelo.
+
+2. Como el coeficiente de determinación $R^2$ es igual a 0.9229, esto quiere decir que el 92.29% de la variabilidad de *NOX* es explicada por el modelo (por la variable *CO*) 
+
+### Análisis de residuos 
+
+Se analizará que el valor esperado de los residuos sea cero.
+
+**Gráficamente**
+
+```{r}
+plot(regresion1$fitted.values,regresion1$residuals,col='blue',ylab="Residuos",xlab="Observaciones")
+abline(h=0,col='green',lwd=2)
+```
+
+Se observó homogeneidad de varianza, se observa que los datos se dispersan relativamente de una forma equitativa por la recta de regresión y aunque se observa además una tendencia en los residuales a decrecer. Por lo tanto podríamos decir que no se aprecia hemocedastiscidad de los residuales.
+
+**Prueba de hipótesis**
+
+$H_0: \mu_R=0$
+
+$H_1: \mu_R \neq 0$
+
+$\alpha=0.05$
+
+```{r}
+data = t.test(regresion1$residuals,conf.level = 0.95,alternative = "two.sided",mu=0)
+data
+mean(regresion1$residuals)
+```
+
+Como el valor p = 1 > alfa=0.05, por lo que la evidencia no es suficiente para rechazar a $H_0$. Por lo que se puede decir que no se descarta que la media de los residuos en la población sea cero. 
+
+```{r}
+mu1 = mean(regresion1$residuals)
+dev1 = sd(regresion1$residuals)
+hist(regresion1$residuals,col='orange', probability = TRUE)
+X1s = seq(mu1-4*dev1,mu1+4*dev1,0.01)
+Y1s = dnorm(X1s,mu1,dev1)
+lines(X1s,Y1s,col='blue') 
+```
+
+Graficamente, aunque no se sigue exactamente la distribución de los valores como se presentaria en una distribución normal (considerando una cantidad equitativa de valores en ambos lados del histograma) se puede decir que en base a lo que se puede observar en grandes razgos se presentan estas caracteristas dentro del histograma. 
+
+Si la muestra es de tamaño menor a 50, es frecuente utilzar la prueba Saphiro.test, por lo que se utilizará la prueba anterior como referencia para la actividad.
+
+**Prueba de hipótesis**
+
+$H_0:$ Los residuos provienen de una distribución normal
+
+$H_1:$ No es cierto que los residuos provengan de una población normal. 
+
+```{r}
+#shapiro.test para n <= 50. y ad.test para n>50
+library(nortest)
+ad.test(regresion1$residuals)
+```
+
+Conclusión: Como el p valor = 0 < 0.05, rechazamos $H_0$. Por lo tanto la evidencia muestra que los residuales no provienen de una distribución normal.
+
+Aunque la prueba de Anderson-Darling indicó que los datos no provienen de una población normal, el gráfico anterior (histograma) sugiere, que su distribución es aproximadamente simétrica unimodal (una sola moda), aproximadamente normal observando la estructura visual de este. 
+
+**Gráfico complementario**
+
+El gráfico Q-Q es un método gráfico para el diagnóstico de diferencias entre la distribución de probabilidad de una población de la que se ha extraído una muestra aleatoria y una distribución usada para la comparación.
+
+```{r}
+qqnorm(regresion1$residuals, col='blue')
+# Comportamiento real de los datos
+qqline(regresion1$residuals, col='green')
+# Muestra el comportamiento de los datos bajo la distribución normal
+```
+
+Graficamente, se puede observar que una parte significativa de los valores se mantiene cercanos al valor de central (cercano a la línea) aunque se pueden observar desviaciones en el inicio y el final (con una mayor desviación que en el inicio).
+
+## Relación 2: NOX y NO
+
+A continuación se analizará la relación entre los compuestos NOX y NO, considerando a NOX como la variable independiente y a NO como la dependiente.
+
+Se crea la regresión lineal:
+
+```{r}
+Y2 = M$NO
+X2 = M$NOX
+regresion2 = lm(Y2~X2)
+regresion2
+```
+
+La ecuación que defiene la regresión se define por: NO=0.7277(NOX)-12.1430
+
+## Gráfica
+
+Se genera la gráfica con la regresión lineal de NOX vs. NO.
+
+```{r}
+plot(X2,Y2,col="blue",main= "NOX vs. NO",xlab="NOX",ylab="NO")
+abline(regresion2, col="red", lwd=2)
+text(200,30,"NO = 0.7277*NOX - 12.1430")
+```
+
+## Verificación del modelo
+
+Se aplican las mismas pruebas que se realizaron para el primer modelo de NO vs. NOX, para comprobar que el modelo es un buen modelo.
+
+### β_1 significativo
+
+Analizaremos la significancia del coeficiente $β_1$ en el modelo, si la hipótesis nula no es rechazada es un indicador de que la variable regresora puede ser eliminada del modelo y por ende que no hay relación entre ambas variables. Si la hipótesis nula se rechaza, se conluye que β_1 es significativamente diferente de cero y por tanto la variable NOX contribuye significativamente al modelo.
+
+## Prueba de hipótesis
+
+$H_0:β_1=0$ (no sirve el modelo porque pendiente = 0)
+$H_1:β_1≠0$ (si hay dependencia entre NOX y NO)
+
+$\alpha = 0.05$
+
+```{r}
+summary(regresion2)
+```
+
+Al análizar los datos de la regresión se concluye que ya que el valor p es prácticamente cero, 0 < 0.05, con un nivel de significancia de 0.05 se rechaza la hipótesis nula, $H_0:β_1=0$, de que $β_1$ es despreciable. Es decir que se justifica el uso de NOX como la variable independiente del modelo.
+
+## Coeficiente de determinación
+
+En segundo lugar, a partir de los datos mostrados se analiza el coeficiente de determinación r^2, ya que este coeficiente en la regresión lineal de NOX vs. NO tiene un valor de 0.9146, se indica que NOX explica el 91.46% de las emisiones de NO. Esta relación determinada por el coeficiente es muy alta e indica que el modelo puede ser muy bueno en el aspecto de relación.
+
+## Análisis de residuos
+
+Se hacen las prebas de los residuales para el modelo de NOX vs. NO buscando que el valor esperado sea 0, que exista homocedasticidad y que los residuales se distribuyan de manera normal $e_i∼N(0,σ)$.
+
+## A. Homocedasticidad - Residuos Gráficamente
+
+```{r}
+plot(regresion2$fitted.values,regresion2$residuals,col='blue',ylab="Residuos",xlab="Observaciones")
+abline(h=0,col='red',lwd=2)
+```
+
+Se observa que los valores no se distribuyen equitativamente arriba y abajo de la recta en cero, muchos de los residuales pasan debajo de la recta y se dispersan a partir de que la intersectan, por ende no se aprecia homocedastiscidad en los residuales.
+
+## B. Media Cero - Prueba de hipótesis
+
+$H_0:μ_R=0$
+$H_1:μ_R≠0$
+$α=0.05$
+
+```{r}
+data2 = t.test(regresion2$residuals,conf.level = 0.95,alternative = "two.sided",mu=0)
+data2
+```
+
+Con el análisis anterior se concluye que el valor p = 1 > alfa = 0.05, por ende con una significancia de 0.05 se determina que no hay evidencia suficiente para rechazar la hipótesis nula, $H_0:μ_R=0$, de que la media de los residuos es cero. La prueba es aprobatoría en este inciso.
+
+## C. Distribución Normal - Prueba de hipótesi
+
+```{r}
+mu2 = mean(regresion2$residuals)
+dev2 = sd(regresion2$residuals)
+hist(regresion2$residuals,col='yellow', probability = TRUE, xlab="Residuos")
+
+X2s = seq(mu2-4*dev2,mu2+4*dev2,0.01)
+Y2s = dnorm(X2s,mu2,dev2)
+lines(X2s,Y2s,col='black') 
+```
+
+Gráficamente se observa que los residuales tienden a distribuirse de manera normal hasta el punto 10 en el eje de los residuos. A pesar de que se rompe la relación continua que se observa al inicio de la gráfica de manera muy notoria en este punto, cabe mencionar que los residuos muestran una distribución más limpia en el modelo de NO vs. NOX que en el modelo de NO vs. NOX.
+
+Se utiliza la prueba Anderson-Darling para determinar de manera númerica la distribución normal de los residuos, se plantean las siguientes hipótesis:
+
+$H_0$: Los residuos provienen de una distribución normal.
+$H_1$: No es cierto que los residuos provengan de una población normal.
+
+```{r}
+library(nortest)
+ad.test(regresion2$residuals)
+```
+
+Ya que el p valor es prácticamente cero, 0 < 0.05, se rechaza la hipótesis nula $H_0$ de que los residuos provienen de una distribución normal con un nivel de significancia de $α=0.05$.
+
+A pesar de no aprobar la prueba de Anderson-Darling se observa que gráficamente sí existe una tendencia a la distribución normal de parte de los residuos de la regresión.
+
+## D. Gráfico complementario
+
+Se realiza el gráfico Q-Q para el modelo:
+
+```{r}
+qqnorm(regresion2$residuals, col='blue')
+qqline(regresion2$residuals, col='red')
+```
+
+Graficamente, se puede observar que una parte significativa de los valores se mantiene cercanos al valor de central (cercano a la línea) aunque se pueden observar desviaciones en el inicio y el final (con una mayor desviación que en el inicio).
+
+## Relación 3: NO y CO
+
+Finalmente, realizaremos el modelo de regresión lineal con las variables *CO* y *NO*. 
+
+Se considerará como variable de respuesta a *CO*
+
+## Elaboración del modelo lineal de N0-CO
+
+```{r}
+Y3 = M$CO
+X3= M$NO
+regresion3= lm(Y3~X3)
+regresion3
+```
+
+La ecuación del modelo de regresión lineal es: $CO = 0.016\,NO + 0.272$
+
+## Gráfica
+
+```{r}
+plot(X3,Y3,col="blue",main="Comparasión NO y CO")
+abline(regresion3, col="green", lwd=2)
+text(125,0.5,"CO = 0.016*NO + 0.272")
+```
+
+## Verificación del modelo
+
+### Beta1 significativo 
+
+Analizaremos la significancia del coeficiente $\beta_1$ en el modelo, si la hipótesis nula no es rechazada  es un indicador de que la variable regresora puede ser eliminada del modelo y por ende que no hay relación entre ambas variables. Si la hipótesis nula se rechaza, se conluye que $\beta_1$ es significativamente diferente de cero y por tanto la variable *NO* contribuye significativamente al modelo.
+
+**Prueba de hipótesis**
+
+$H_0: \beta_1 = 0$ (no sirve el modelo porque pendiente = 0)
+
+$H_1: \beta_1 \neq 0$  (si hay dependencia entre NO y CO)
+
+$\alpha = 0.05$
+
+```{r}
+summary(regresion3)
+```
+
+1. Como el valor p = 0 < 0.05 rechazamos la hipótesis nula con un nivel de significancia de 0.05, y se justifica el uso de la *NO* como variable regresora o independiente en el modelo. 
+
+2. Como el coeficiente de determinación $R^2$ es igual a 0.8243, esto quiere decir que el 82.43% de la variabilidad de *CO* es explicada por el modelo (por la variable *NO*) 
+
+### Análisis de residuos 
+
+Se analizará que el valor esperado de los residuos sea cero.
+
+**Gráficamente**
+
+```{r}
+plot(regresion3$fitted.values,regresion3$residuals,col='blue',ylab="Residuos",xlab="Observaciones")
+abline(h=0,col='green',lwd=2)
+```
+
+No se observó homogeneidad de varianza, se observa que los datos se dispersan mayormente por encima de la recta de regresión y se observa además una tendencia en los residuales a decrecer. Por lo tanto podríamos decir que no se aprecia hemocedastiscidad de los residuales. Importante considerar la acumulación de valores en el inicio. 
+
+**Prueba de hipótesis**
+
+$H_0: \mu_R=0$
+
+$H_1: \mu_R \neq 0$
+
+$\alpha=0.05$
+
+```{r}
+data = t.test(regresion3$residuals,conf.level = 0.95,alternative = "two.sided",mu=0)
+data
+mean(regresion3$residuals)
+```
+
+Como el valor p = 1 > alfa=0.05, por lo que la evidencia no es suficiente para rechazar a $H_0$. Por lo que se puede decir que no se descarta que la media de los residuos en la población sea cero. 
+
+### Análisis de normalidad de los residuales
+
+Se analizará si los residuos se distribuyen de manera Normal.
+
+**Gráficamente**
+
+```{r}
+mu3 = mean(regresion3$residuals)
+dev3 = sd(regresion3$residuals)
+hist(regresion3$residuals,col='orange', probability = TRUE)
+X33 = seq(mu3-4*dev3,mu3+4*dev3,0.01)
+Y33 = dnorm(X33,mu3,dev3)
+lines(X33,Y33,col='blue') 
+```
+
+Graficamente,se puede observar una concentración de valores importante en la media = 0, aunque su distribución no sigue precisamente una distribución normal, en grandes rasgos se puede observar un cierta distribución equitiva entre ambos lados del histograma. 
+
+Si la muestra es de tamaño menor a 50, es frecuente utilzar la prueba Saphiro.test, por lo que se utilizará la prueba anterior como referencia para la actividad.
+
+**Prueba de hipótesis**
+
+$H_0:$ Los residuos provienen de una distribución normal
+
+$H_1:$ No es cierto que los residuos provengan de una población normal.
+
+```{r}
+ad.test(regresion3$residuals)
+```
+
+Conclusión: Como el p valor = 0 < 0.05, rechazamos $H_0$. Por lo tanto la evidencia muestra que los residuales no provienen de una distribución normal.
+
+Aunque la prueba de Anderson-Darling indicó que los datos no provienen de una población normal, el gráfico anterior (histograma) sugiere, que su distribución es aproximadamente simétrica unimodal (una sola moda), aproximadamente normal.
+
+**Gráficos complementarios**
+
+El gráfico Q-Q es un método gráfico para el diagnóstico de diferencias entre la distribución de probabilidad de una población de la que se ha extraído una muestra aleatoria y una distribución usada para la comparación.
+
+```{r}
+qqnorm(regresion3$residuals, col='blue')
+qqline(regresion3$residuals, col='green')
+```
+
+Graficamente, se puede observar que una parte significativa de los valores se mantiene cercanos al valor de central (cercano a la línea) aunque se pueden observar desviaciones en el inicio y el final (con una mayor desviación que en el inicio).
+
+
